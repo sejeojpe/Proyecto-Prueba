@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  frontend:
+    image: tuusuario/angular_frontend:latest
+    container_name: angular_frontend
+    ports:
+      - "4200:4200"
+    networks:
+      - prodnet
+
+  backend:
+    image: tuusuario/symfony_backend:latest
+    container_name: symfony_backend
+    environment:
+      APP_ENV: prod
+    depends_on:
+      - mysql
+    networks:
+      - prodnet
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: symfony
+      MYSQL_USER: symfony
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - prodnet
+
+  nginx:
+    image: nginx:1.25
+    container_name: nginx_server
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx/default.prod.conf/default.prod.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - prodnet
+
+volumes:
+  mysql_data:
+
+networks:
+  prodnet:
+    driver: bridge
